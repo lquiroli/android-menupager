@@ -2,7 +2,6 @@ package com.github.lquiroli.menupager.sample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import com.github.lquiroli.menupager.widget.MenuPager;
 import com.github.lquiroli.menupager.widget.SimpleMenuAdapter;
@@ -14,7 +13,7 @@ import com.github.lquiroli.menupager.widget.SimpleMenuAdapter;
 public class SimpleMenuActivity extends AppCompatActivity {
 
     private MenuPager mMenuPager;
-    private BooksMenu menu;
+    private Library menu;
     private SimpleMenuAdapter menuAdapter;
 
     @Override
@@ -33,10 +32,57 @@ public class SimpleMenuActivity extends AppCompatActivity {
 
     private void generateMenu() {
 
-        menu = new BooksMenu();
+        menu = new Library();
+
+        BookClassification topClassification = new BookClassification();
+        topClassification.setName("Genre");
+        BookClassification childClassification = new BookClassification();
+        childClassification.setName("Fantasy");
+        Book book = new Book();
+        book.setName("Eragon");
+        childClassification.getClassifications().add(book);
+        book = new Book();
+        book.setName("Lord of the rings");
+        childClassification.getClassifications().add(book);
+        book = new Book();
+        book.setName("A game of thrones");
+        childClassification.getClassifications().add(book);
+        topClassification.getClassifications().add(childClassification);
+        childClassification = new BookClassification();
+        childClassification.setName("Horror");
+        BookClassification childchildclassification = new BookClassification();
+        childchildclassification.setName("Psychological");
+        book = new Book();
+        book.setName("IT");
+        childchildclassification.getClassifications().add(book);
+        book = new Book();
+        book.setName("Shining");
+        childchildclassification.getClassifications().add(book);
+        childClassification.getClassifications().add(childchildclassification);
+        topClassification.getClassifications().add(childClassification);
+        childClassification = new BookClassification();
+        childClassification.setName("Comic");
+        topClassification.getClassifications().add(childClassification);
+        childClassification = new BookClassification();
+        childClassification.setName("Drama");
+        topClassification.getClassifications().add(childClassification);
+        menu.getMenuItems().add(topClassification);
+
+        topClassification = new BookClassification();
+        topClassification.setName("Age");
+        childClassification = new BookClassification();
+        childClassification.setName("Mature");
+        topClassification.getClassifications().add(childClassification);
+        childClassification = new BookClassification();
+        childClassification.setName("Baby");
+        topClassification.getClassifications().add(childClassification);
+        childClassification = new BookClassification();
+        childClassification.setName("Teenager");
+        topClassification.getClassifications().add(childClassification);
+        menu.getMenuItems().add(topClassification);
 
         //Generate menu
-        for (int count = 1; count <= 3; count++) {
+        /*for (int count = 1; count <= 3; count++) {
             Book item = new Book();
             item.setTitle("Item " + count);
             Log.d("MenuActivity", item.getTitle());
@@ -44,11 +90,18 @@ public class SimpleMenuActivity extends AppCompatActivity {
             for (int subcount = 1; subcount <= 4; subcount++) {
                 Book subItem = new Book();
                 subItem.setTitle("Item " + count + "-" + subcount);
+
+                for(int subsubcount=1;subsubcount<=3;subsubcount++){
+                    Book subsubItem = new Book();
+                    subsubItem.setTitle("Item " + count + "-" + subcount + "-"+subsubcount);
+                    subItem.getChildren().add(subsubItem);
+                }
+
                 item.getChildren().add(subItem);
             }
 
             menu.getMenuItems().add(item);
-        }
+        }*/
 
     }
 

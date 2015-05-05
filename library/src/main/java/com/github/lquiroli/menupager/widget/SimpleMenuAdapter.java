@@ -1,34 +1,37 @@
 package com.github.lquiroli.menupager.widget;
 
 import android.support.v4.app.FragmentManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 
-import com.github.lquiroli.menupager.model.MenuItem;
+import com.github.lquiroli.menupager.R;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * SimpleMenuAdapter
  * Created by lorenzo.quiroli on 29/04/2015.
  */
-public class SimpleMenuAdapter extends MenuPagerFragmentAdapter {
+public final class SimpleMenuAdapter extends BaseMenuFragmentAdapter {
 
+    private RecyclerView mRecyclerView;
 
     public SimpleMenuAdapter(FragmentManager fm, ArrayList items) {
         super(fm, items);
-
     }
 
     @Override
-    public MenuFragment getItem(int pageIndex, ArrayList data) {
+    protected RecyclerView onCreateView(int pageIndex, List data, MenuPager parent) {
 
-        SimpleMenuFragment fragment = new SimpleMenuFragment();
-        return fragment;
+        mRecyclerView = (RecyclerView) LayoutInflater.from(parent.getContext()).inflate(R.layout.menu_fragment, parent, false);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(parent.getContext()));
+        mRecyclerView.setHasFixedSize(true);
+        SimpleMenuRecyclerAdapter adpt = new SimpleMenuRecyclerAdapter(data);
+        mRecyclerView.setAdapter(adpt);
+        return mRecyclerView;
 
-    }
-
-    @Override
-    public ArrayList getData(Object item) {
-        return ((MenuItem) item).getChildren();
     }
 
 }
