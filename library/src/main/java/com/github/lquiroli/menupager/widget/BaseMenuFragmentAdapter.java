@@ -3,149 +3,159 @@ package com.github.lquiroli.menupager.widget;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 
 import com.github.lquiroli.menupager.R;
-import com.github.lquiroli.menupager.annotation.Children;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * MenuPagerFragmentAdapter
  * Created by lorenzo.quiroli on 29/04/2015.
  */
-public abstract class BaseMenuFragmentAdapter {
+public abstract class BaseMenuFragmentAdapter implements Serializable {
 
-    private static final String TAG = BaseMenuFragmentAdapter.class.getSimpleName();
+    MenuPager mMenuPager;
+    int[] mPageSelections;
+    MenuFragment mCurrentFragment;
     private FragmentManager mFragmentManager;
-    private int mCurrentPage = 0;
-    private MenuPager mMenuPager;
-    private ArrayList<Integer> mPageSelections;
-    private List mItems;
-    private int mBackStackStep = 0;
-    private FragmentManager.OnBackStackChangedListener mOnBackStackChangeListenerInternal = new FragmentManager.OnBackStackChangedListener() {
-        @Override
-        public void onBackStackChanged() {
-            if (mBackStackStep > mFragmentManager.getBackStackEntryCount()) {
-                //User went back
-                mCurrentPage--;
-                mPageSelections.remove(mPageSelections.size() - 1);
-            }
-            mBackStackStep = mFragmentManager.getBackStackEntryCount();
-        }
-    };
+    private ArrayList mItems;
 
-    public BaseMenuFragmentAdapter(FragmentManager fm, List items) {
+    public BaseMenuFragmentAdapter(FragmentManager fm, ArrayList items) {
         mItems = items;
         mFragmentManager = fm;
-        mFragmentManager.addOnBackStackChangedListener(mOnBackStackChangeListenerInternal);
-        mPageSelections = new ArrayList<Integer>();
+        mPageSelections = new int[0];
     }
 
-    private final MenuFragment getFragmentItem() {
+    /*
+    PRIVATE FUNCTIONS
+     */
 
-        List pageItems = onCalculateFragmentData(mCurrentPage, mPageSelections, mItems);
+    private final MenuFragment getFragmentItem() {
+        return getFragmentItem(mPageSelections.length);
+    }
+
+    private final MenuFragment getFragmentItem(int pageIndex) {
+        ArrayList pageItems = determineCollection(pageIndex);
         MenuFragment fragment = new MenuFragment();
         fragment.mAdapter = this;
         fragment.mData = pageItems;
         return fragment;
-
     }
 
-    private List onCalculateFragmentData(int pageIndex, List<Integer> pageSelections, List topLevelData) {
+    /*
+    PROTECTED FUNCTIONS
+     */
 
-        List pageItems = topLevelData;
-        Log.d(TAG, "Page : " + pageIndex);
-        Log.d(TAG, "PageSelections : " + pageSelections.size());
+    protected final ArrayList determineCollection() {
+        return determineCollection(mPageSelections.length);
+    }
+
+    protected final ArrayList determineCollection(int pageIndex) {
+
+        ArrayList pageItems = mItems;
+        Object obj = null;
         for (int count = 0; count < pageIndex; count++) {
-            Log.d(TAG, "Count : " + count);
-            try {
-                Object obj = pageItems.get(pageSelections.get(count));
-                Field[] fields = obj.getClass().getDeclaredFields();
-                for (Field field : fields) {
-                    Annotation[] annotations = field.getDeclaredAnnotations();
-                    for (Annotation annotation : annotations) {
-                        if (annotation instanceof Children) {
-                            //Found data, check type
-                            Log.d(TAG, "Found children");
-                            if (field.getType().newInstance() instanceof Collection) {
-                                field.setAccessible(true);
-
-                                pageItems = (List) field.get(obj);
-                                Log.d(TAG, "Children size : " + pageItems.size());
-                                field.setAccessible(false);
-                            }
-
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-
+            obj = pageItems.get(mPageSelections[count]);
+            pageItems = ReflectUtils.reflectList(obj);
         }
-        return pageItems;
 
+        return pageItems;
     }
+
+    protected MenuPager getMenuPager() {
+        return mMenuPager;
+    }
+
+    protected final boolean hasChildren(int index) {
+        return hasChildren(index, mPageSelections.length);
+    }
+
+    protected final boolean hasChildren(int index, int pageIndex) {
+        Object obj = determineCollection(pageIndex).get(index);
+        return hasChildren(obj);
+    }
+
+    protected final boolean hasChildren(Object obj) {
+        return ReflectUtils.reflectList(obj).size() > 0;
+    }
+
+    protected abstract RecyclerView onCreateView(int pageIndex, MenuPager parent);
+
+    protected abstract MenuPager.Adapter onProvideAdapter(int pageIndex, RecyclerView view, ArrayList data);
 
     protected void onViewReady(MenuPager menuPager) {
 
         mMenuPager = menuPager;
-        mFragmentManager.beginTransaction().add(menuPager.getId(), getFragmentItem()).commit();
+        MenuFragment fragment = getFragmentItem();
+        mCurrentFragment = fragment;
+        mFragmentManager.beginTransaction().add(menuPager.getId(), fragment).commit();
+
     }
 
-    protected int[] onChangePageAnimation(int oldPageIndex, int newPageIndex) {
-
-        int[] animations = new int[4];
+    protected void onForwardAnimation(int oldPageIndex, int newPageIndex, int[] animations) {
         animations[0] = R.anim.menu_pager_current_in;
         animations[1] = R.anim.menu_pager_current_out;
-        animations[2] = R.anim.menu_pager_back_in;
-        animations[3] = R.anim.menu_pager_back_out;
+    }
 
-        return animations;
+    protected void onBackwardAnimation(int oldPageIndex, int newPageIndex, int[] animations) {
+        animations[0] = R.anim.menu_pager_back_in;
+        animations[1] = R.anim.menu_pager_back_out;
+    }
+
+    /*
+    PUBLIC FUNCTIONS
+     */
+
+    public boolean moveBackward() {
+
+        if (mPageSelections.length > 0) {
+            MenuFragment fragment = getFragmentItem(mPageSelections.length - 1);
+            mCurrentFragment = fragment;
+            FragmentTransaction fTransaction = mFragmentManager.beginTransaction();
+            int[] animations = new int[2];
+            onBackwardAnimation(mPageSelections.length - 1, mPageSelections.length, animations);
+            fTransaction.setCustomAnimations(animations[0], animations[1]);
+            fTransaction.replace(mMenuPager.getId(), fragment);
+            fTransaction.commit();
+            int[] newSelections = new int[mPageSelections.length - 1];
+            System.arraycopy(mPageSelections, 0, newSelections, 0, newSelections.length);
+            mPageSelections = newSelections;
+            return true;
+        }
+        return false;
+
+    }
+
+    public int getCurrentPageIndex() {
+        return mPageSelections.length;
+    }
+
+    public Object getItem(int index) {
+        return getItem(index, mPageSelections.length);
+    }
+
+    public Object getItem(int index, int pageIndex) {
+
+        return determineCollection(pageIndex).get(index);
 
     }
 
     public void moveForward(int selection) {
 
-        mPageSelections.add(selection);
-        mCurrentPage++;
+        int[] newSelections = new int[mPageSelections.length + 1];
+        System.arraycopy(mPageSelections, 0, newSelections, 0, mPageSelections.length);
+        newSelections[newSelections.length - 1] = selection;
+        mPageSelections = newSelections;
+        MenuFragment fragment = getFragmentItem(mPageSelections.length);
+        mCurrentFragment = fragment;
         FragmentTransaction fTransaction = mFragmentManager.beginTransaction();
-        int[] animations = onChangePageAnimation(mCurrentPage - 1, mCurrentPage);
-
-        switch (animations.length) {
-            case 2:
-                fTransaction.setCustomAnimations(animations[0], animations[1]);
-                break;
-            case 4:
-                fTransaction.setCustomAnimations(animations[0], animations[1], animations[2], animations[3]);
-                break;
-
-        }
-        fTransaction.replace(mMenuPager.getId(), getFragmentItem());
-        fTransaction.addToBackStack(null).commit();
+        int[] animations = new int[2];
+        onForwardAnimation(mPageSelections.length - 1, mPageSelections.length, animations);
+        fTransaction.setCustomAnimations(animations[0], animations[1]);
+        fTransaction.replace(mMenuPager.getId(), fragment);
+        fTransaction.commit();
     }
 
-    public void moveBackward() {
-        mFragmentManager.popBackStackImmediate();
-    }
-
-    protected abstract RecyclerView onCreateView(int pageIndex, List data, MenuPager parent);
-
-    public int getCurrentPageIndex() {
-        return mCurrentPage;
-    }
-
-    public MenuFragment getCurrentPage() {
-        return null;//TODO
-    }
-
-    MenuPager getMenuPager() {
-        return mMenuPager;
-    }
 }
 

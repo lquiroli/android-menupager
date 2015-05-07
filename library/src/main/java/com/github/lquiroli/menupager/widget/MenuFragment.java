@@ -7,7 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.List;
+import java.util.ArrayList;
 
 /**
  * MenuFragment
@@ -17,7 +17,25 @@ public final class MenuFragment extends Fragment {
 
     BaseMenuFragmentAdapter mAdapter;
     RecyclerView mRecyclerView;
-    List mData;
+    ArrayList mData;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            if (savedInstanceState.getSerializable("adapter") != null) {
+                mAdapter = (BaseMenuFragmentAdapter) savedInstanceState.getSerializable("adapter");
+            }
+            if (savedInstanceState.getSerializable("data") != null) {
+                mData = (ArrayList) savedInstanceState.getSerializable("data");
+            }
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
 
     public RecyclerView getRecyclerView() {
         return mRecyclerView;
@@ -26,14 +44,19 @@ public final class MenuFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        mRecyclerView = mAdapter.onCreateView(mAdapter.getCurrentPageIndex(), mData, mAdapter.getMenuPager());
-        if (mRecyclerView.getAdapter() != null) {
-            if (!(mRecyclerView.getAdapter() instanceof MenuPager.Adapter)) {
-                throw new ClassCastException("RecyclerView adapter must extend " + MenuPager.Adapter.class.getName());
-            } else {
-                ((MenuPager.Adapter) mRecyclerView.getAdapter()).menuPagerInternal = mAdapter.getMenuPager();
+        if (mAdapter != null) {
+            mRecyclerView = mAdapter.onCreateView(mAdapter.getCurrentPageIndex(), mAdapter.getMenuPager());
+            mRecyclerView.setAdapter(mAdapter.onProvideAdapter(mAdapter.getCurrentPageIndex(), mRecyclerView, mData));
+            if (mRecyclerView.getAdapter() != null) {
+                if (!(mRecyclerView.getAdapter() instanceof MenuPager.Adapter)) {
+                    throw new ClassCastException("RecyclerView adapter must extend " + MenuPager.Adapter.class.getName());
+                } else {
+                    ((MenuPager.Adapter) mRecyclerView.getAdapter()).menuPagerInternal = mAdapter.getMenuPager();
+                    ((MenuPager.Adapter) mRecyclerView.getAdapter()).adapterInternal = mAdapter;
+                }
             }
         }
+
         return mRecyclerView;
 
     }
