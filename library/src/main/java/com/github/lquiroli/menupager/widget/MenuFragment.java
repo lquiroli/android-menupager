@@ -16,20 +16,14 @@ import java.util.ArrayList;
 public final class MenuFragment extends Fragment {
 
     BaseMenuFragmentAdapter mAdapter;
-    RecyclerView mRecyclerView;
     ArrayList mData;
+    MenuPager mMenuPager;
+    int mPageIndex;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            if (savedInstanceState.getSerializable("adapter") != null) {
-                mAdapter = (BaseMenuFragmentAdapter) savedInstanceState.getSerializable("adapter");
-            }
-            if (savedInstanceState.getSerializable("data") != null) {
-                mData = (ArrayList) savedInstanceState.getSerializable("data");
-            }
-        }
+        setRetainInstance(false);
     }
 
     @Override
@@ -37,25 +31,21 @@ public final class MenuFragment extends Fragment {
         super.onSaveInstanceState(outState);
     }
 
-    public RecyclerView getRecyclerView() {
-        return mRecyclerView;
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        if (mAdapter != null) {
-            mRecyclerView = mAdapter.onCreateView(mAdapter.getCurrentPageIndex(), mAdapter.getMenuPager());
-            mRecyclerView.setAdapter(mAdapter.onProvideAdapter(mAdapter.getCurrentPageIndex(), mRecyclerView, mData));
-            if (mRecyclerView.getAdapter() != null) {
-                if (!(mRecyclerView.getAdapter() instanceof MenuPager.Adapter)) {
-                    throw new ClassCastException("RecyclerView adapter must extend " + MenuPager.Adapter.class.getName());
-                } else {
-                    ((MenuPager.Adapter) mRecyclerView.getAdapter()).menuPagerInternal = mAdapter.getMenuPager();
-                    ((MenuPager.Adapter) mRecyclerView.getAdapter()).adapterInternal = mAdapter;
-                }
+        RecyclerView mRecyclerView = mAdapter.onCreateView(mPageIndex, mMenuPager);
+        mRecyclerView.setAdapter(mAdapter.onProvideAdapter(mPageIndex, mRecyclerView, mData));
+        if (mRecyclerView.getAdapter() != null) {
+            if (!(mRecyclerView.getAdapter() instanceof MenuPager.Adapter)) {
+                throw new ClassCastException("RecyclerView adapter must extend " + MenuPager.Adapter.class.getName());
+            } else {
+                //TODO serve?
+                ((MenuPager.Adapter) mRecyclerView.getAdapter()).menuPagerInternal = mMenuPager;
+                ((MenuPager.Adapter) mRecyclerView.getAdapter()).adapterInternal = mAdapter;
             }
         }
+
 
         return mRecyclerView;
 

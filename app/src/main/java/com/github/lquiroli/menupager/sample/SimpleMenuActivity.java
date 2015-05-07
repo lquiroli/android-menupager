@@ -34,17 +34,12 @@ public class SimpleMenuActivity extends AppCompatActivity implements MenuPager.O
         mMenuPager.setAdapter(menuAdapter);
         mMenuPager.setOnMenuItemClickListener(this);
 
-        MenuPager mMenuPager2 = (MenuPager) findViewById(R.id.menu_pager2);
-        SimpleMenuAdapter menuAdapter2 = new MyFragmentAdapter(getSupportFragmentManager(), menu.getEntries());
-        mMenuPager2.setAdapter(menuAdapter2);
-        mMenuPager2.setOnMenuItemClickListener(this);
-
     }
 
     @Override
     public void onBackPressed() {
 
-        if (!menuAdapter.moveBackward()) {
+        if (!mMenuPager.moveBackward()) {
             super.onBackPressed();
         }
 
