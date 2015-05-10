@@ -5,6 +5,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.github.lquiroli.menupager.R;
+
 import java.util.ArrayList;
 
 /**
@@ -27,7 +29,8 @@ public final class SimpleMenuRecyclerAdapter extends MenuPager.Adapter<SimpleMen
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
 
-        return new ViewHolder(LayoutInflater.from(viewGroup.getContext()).inflate(android.R.layout.simple_list_item_1, viewGroup, false));
+        View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.simple_menu_item, viewGroup, false);
+        return new ViewHolder(v);
 
     }
 

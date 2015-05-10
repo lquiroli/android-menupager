@@ -29,17 +29,7 @@ public abstract class BaseMenuFragmentAdapter implements Serializable {
      * @param menuStack the menu stack of choices
      * @return
      */
-    public ArrayList determinePageCollection(int pageIndex, int[] menuStack) {
-
-        ArrayList pageItems = mItems;
-
-        for (int count = 0; count < pageIndex; count++) {
-            Object item = pageItems.get(menuStack[count]);
-            pageItems = getItemCollection(item);
-        }
-
-        return pageItems;
-    }
+    public abstract ArrayList determinePageCollection(int pageIndex, int[] menuStack);
 
     Fragment getPageInternal(int pageIndex, int[] menuStack) {
         return getPage(pageIndex, determinePageCollection(pageIndex, menuStack));

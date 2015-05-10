@@ -9,7 +9,9 @@ import com.github.lquiroli.menupager.widget.SimpleMenuFragmentAdapter;
 import java.util.ArrayList;
 
 /**
- * Created by lorenzo.quiroli on 05/05/2015.
+ * A custom implementation of a {@link com.github.lquiroli.menupager.widget.SimpleMenuFragmentAdapter}. Since we decorated our class {@link com.github.lquiroli.menupager.sample.MenuItem}
+ * we only need to implement {@link #getPage(int, java.util.ArrayList)} method
+ * <p>Created by lorenzo.quiroli</p>
  */
 public class MyFragmentAdapter extends SimpleMenuFragmentAdapter {
 
@@ -22,7 +24,7 @@ public class MyFragmentAdapter extends SimpleMenuFragmentAdapter {
 
         MenuFragment fragment = new MenuFragment();
         Bundle bundle = new Bundle();
-        bundle.putSerializable(MenuFragment.BUNDLE_DATA, data);
+        bundle.putParcelableArrayList(MenuFragment.BUNDLE_DATA, data);
         fragment.setArguments(bundle);
 
         return fragment;

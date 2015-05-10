@@ -1,6 +1,7 @@
 package com.github.lquiroli.menupager.widget;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
@@ -256,9 +257,9 @@ public class MenuPager extends FrameLayout {
         int index = mCurrentPage;
         while (index > pageIndex) {
             if (mMenuStack.length > 0) {
-                int[] newSelections = new int[mMenuStack.length - 1];
-                System.arraycopy(mMenuStack, 0, newSelections, 0, newSelections.length);
-                mMenuStack = newSelections;
+                int[] newStack = new int[mMenuStack.length - 1];
+                System.arraycopy(mMenuStack, 0, newStack, 0, newStack.length);
+                mMenuStack = newStack;
             }
             index--;
         }
@@ -283,10 +284,10 @@ public class MenuPager extends FrameLayout {
      * @param smoothScroll true to animate page change, false otherwise
      */
     public void moveForward(int selection, boolean smoothScroll) {
-        int[] newSelections = new int[mMenuStack.length + 1];
-        System.arraycopy(mMenuStack, 0, newSelections, 0, mMenuStack.length);
-        newSelections[newSelections.length - 1] = selection;
-        mMenuStack = newSelections;
+        int[] newStack = new int[mMenuStack.length + 1];
+        System.arraycopy(mMenuStack, 0, newStack, 0, mMenuStack.length);
+        newStack[newStack.length - 1] = selection;
+        mMenuStack = newStack;
         setCurrentPageInternal(mMenuStack.length, smoothScroll);
     }
 
@@ -301,7 +302,7 @@ public class MenuPager extends FrameLayout {
         SavedState ss = (SavedState) state;
         super.onRestoreInstanceState(ss.getSuperState());
 
-        mMenuStack = ss.pageSelections;
+        mMenuStack = ss.menuStack;
         mCurrentPage = ss.currentPage;
 
         setCurrentPageInternal(mCurrentPage, false);
@@ -312,7 +313,7 @@ public class MenuPager extends FrameLayout {
     protected Parcelable onSaveInstanceState() {
         Parcelable superState = super.onSaveInstanceState();
         SavedState ss = new SavedState(superState);
-        ss.pageSelections = mMenuStack;
+        ss.menuStack = mMenuStack;
         ss.currentPage = mCurrentPage;
         return ss;
     }
@@ -355,17 +356,40 @@ public class MenuPager extends FrameLayout {
 
     void checkHierarchy(View child) {
 
+        int childLimit = 0;
+        boolean isPreHoneycomb = false;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+            childLimit = 1;
+            isPreHoneycomb = true;
+        }
+
         if (child != null) {
-            if (getChildCount() > 0) {
+            //Check child count
+            if (getChildCount() > childLimit) {
                 throw new IllegalStateException("MenuPager can only host one child");
-            } else if (!(child instanceof RecyclerView)) {
-                throw new IllegalStateException("MenuPager only child must be instance of " + RecyclerView.class.getName());
+            }
+
+            //Check child type
+            if (isPreHoneycomb) {
+                if ((!(child instanceof RecyclerView) && getChildCount() == childLimit)
+                        ||
+                        (!(child instanceof FrameLayout) && getChildCount() == 0)) {
+                    throw new IllegalStateException("MenuPager only child must be instance of " + RecyclerView.class.getName());
+                }
             } else {
+                if (!(child instanceof RecyclerView)) {
+                    throw new IllegalStateException("MenuPager only child must be instance of " + RecyclerView.class.getName());
+                }
+            }
+
+            if (child instanceof RecyclerView) {
                 RecyclerView.Adapter adapter = ((RecyclerView) child).getAdapter();
                 if (adapter != null && !(adapter instanceof Adapter)) {
                     throw new IllegalStateException("RecyclerView adapter must be instance of " + MenuPager.Adapter.class.getName());
                 }
             }
+
+
         }
 
     }
@@ -408,7 +432,7 @@ public class MenuPager extends FrameLayout {
             }
         });
         ClassLoader loader;
-        int[] pageSelections;
+        int[] menuStack;
         int currentPage;
 
         public SavedState(Parcelable superState) {
@@ -420,7 +444,7 @@ public class MenuPager extends FrameLayout {
             if (loader == null) {
                 loader = getClass().getClassLoader();
             }
-            pageSelections = in.createIntArray();
+            menuStack = in.createIntArray();
             currentPage = in.readInt();
             this.loader = loader;
         }
@@ -428,7 +452,7 @@ public class MenuPager extends FrameLayout {
         @Override
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
-            out.writeIntArray(pageSelections);
+            out.writeIntArray(menuStack);
             out.writeInt(currentPage);
         }
 
@@ -452,7 +476,14 @@ public class MenuPager extends FrameLayout {
                 @Override
                 public void onClick(View v) {
 
-                    MenuPager menuPager = (MenuPager) mRecyclerView.getParent();
+                    MenuPager menuPager = null;
+
+                    //In pre-honeycomb a layer of NoSaveStateFrameLayout is added by support library. In case, go up with parent for 2 levels
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                        menuPager = (MenuPager) mRecyclerView.getParent();
+                    } else {
+                        menuPager = (MenuPager) mRecyclerView.getParent().getParent();
+                    }
 
                     final int index = mRecyclerView.getChildAdapterPosition(v);
                     Object obj = menuPager.mAdapter.getItem(index, menuPager.mCurrentPage, menuPager.mMenuStack);

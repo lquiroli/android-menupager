@@ -17,12 +17,27 @@ import java.util.ArrayList;
  */
 public abstract class SimpleMenuFragmentAdapter extends BaseMenuFragmentAdapter {
 
+    private ArrayList mItems;
+
     public SimpleMenuFragmentAdapter(FragmentManager fm, ArrayList items) {
         super(fm, items);
+        mItems = items;
     }
 
     public ArrayList getItemCollection(Object item) {
         return ReflectUtils.reflectList(item);
+    }
+
+    public ArrayList determinePageCollection(int pageIndex, int[] menuStack) {
+
+        ArrayList pageItems = mItems;
+
+        for (int count = 0; count < pageIndex; count++) {
+            Object item = pageItems.get(menuStack[count]);
+            pageItems = getItemCollection(item);
+        }
+
+        return pageItems;
     }
 
     protected void onForwardAnimation(int oldPageIndex, int newPageIndex, int[] animations) {
@@ -35,8 +50,8 @@ public abstract class SimpleMenuFragmentAdapter extends BaseMenuFragmentAdapter 
         animations[1] = R.anim.menu_pager_back_out;
     }
 
-    public Object getItem(int itemIndex, int pageIndex, int[] pageSelections) {
-        return determinePageCollection(pageIndex, pageSelections).get(itemIndex);
+    public Object getItem(int itemIndex, int pageIndex, int[] menuStack) {
+        return determinePageCollection(pageIndex, menuStack).get(itemIndex);
     }
 
     @Override

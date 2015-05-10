@@ -43,14 +43,7 @@ class ReflectUtils {
     public static String reflectLabel(Object obj) {
 
         try {
-            ArrayList<Field> totFields = new ArrayList<Field>();
-            for (Class<?> c = obj.getClass(); c != null; c = c.getSuperclass()) {
-                Field[] fields = c.getDeclaredFields();
-                for (Field field : fields) {
-                    totFields.add(field);
-                }
-            }
-
+            Field[] totFields = obj.getClass().getDeclaredFields();
             for (Field field : totFields) {
                 Annotation[] annotations = field.getDeclaredAnnotations();
                 for (Annotation annotation : annotations) {
