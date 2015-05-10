@@ -6,10 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Children
- * Created by lorenzo.quiroli on 30/04/2015.
+ * Use this annotation to decorate a collection inside your custom class. This will be used by {@link com.github.lquiroli.menupager.widget.SimpleMenuFragmentAdapter}
+ * during creation of the menu pages
+ * <p>Created by lorenzo.quiroli</p>
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Children {
+public @interface Collection {
 }

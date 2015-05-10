@@ -1,12 +1,11 @@
 package com.github.lquiroli.menupager.widget;
 
-import com.github.lquiroli.menupager.annotation.Children;
+import com.github.lquiroli.menupager.annotation.Collection;
 import com.github.lquiroli.menupager.annotation.Label;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * Created by lorenzo.quiroli on 05/05/2015.
@@ -22,9 +21,9 @@ class ReflectUtils {
             for (Field field : fields) {
                 Annotation[] annotations = field.getDeclaredAnnotations();
                 for (Annotation annotation : annotations) {
-                    if (annotation instanceof Children) {
+                    if (annotation instanceof Collection) {
                         //Found data, check type
-                        if (field.getType().newInstance() instanceof Collection) {
+                        if (field.getType().newInstance() instanceof java.util.Collection) {
                             field.setAccessible(true);
                             list = (ArrayList) field.get(obj);
                             field.setAccessible(false);

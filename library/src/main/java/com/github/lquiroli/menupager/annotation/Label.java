@@ -6,8 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Title
- * Created by lorenzo.quiroli on 30/04/2015.
+ * Use this annotation to decorate a String inside your custom class. This will be used by {@link com.github.lquiroli.menupager.widget.SimpleMenuFragmentAdapter}
+ * during creation of the menu pages and by {@link com.github.lquiroli.menupager.widget.SimpleMenuRecyclerAdapter} during creation of menu items
+ * <p>Created by lorenzo.quiroli</p>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

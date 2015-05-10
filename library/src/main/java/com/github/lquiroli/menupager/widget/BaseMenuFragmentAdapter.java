@@ -1,16 +1,15 @@
 package com.github.lquiroli.menupager.widget;
 
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.widget.RecyclerView;
-
-import com.github.lquiroli.menupager.R;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
- * MenuPagerFragmentAdapter
- * Created by lorenzo.quiroli on 29/04/2015.
+ * Class that provides basic adapter behaviour. Extend this class or {@link com.github.lquiroli.menupager.widget.SimpleMenuFragmentAdapter}  to create your own implementation and provide it to an instance of
+ * {@link com.github.lquiroli.menupager.widget.MenuPager}
+ * <p>Created by lorenzo.quiroli</p>
  */
 public abstract class BaseMenuFragmentAdapter implements Serializable {
 
@@ -22,66 +21,84 @@ public abstract class BaseMenuFragmentAdapter implements Serializable {
         mFragmentManager = fm;
     }
 
-    /*
-    PRIVATE FUNCTIONS
+    /**
+     * This method cycles through the provided user data and determines the collection for each menu page. Generally you don't need to override this method.
+     * To customize the lookup of data from the collection it should be enough to override {@link #getItemCollection(Object)} method
+     *
+     * @param pageIndex the index of the page for which calculate the collection
+     * @param menuStack the menu stack of choices
+     * @return
      */
-
-    public MenuFragment getFragmentItem(int pageIndex, int[] pageSelections) {
-        ArrayList pageItems = determineCollection(pageIndex, pageSelections);
-        MenuFragment fragment = new MenuFragment();
-        fragment.mAdapter = this;
-        fragment.mData = pageItems;
-        return fragment;
-    }
-
-    /*
-    PROTECTED FUNCTIONS
-     */
-
-    protected final ArrayList determineCollection(int pageIndex, int[] pageSelections) {
+    public ArrayList determinePageCollection(int pageIndex, int[] menuStack) {
 
         ArrayList pageItems = mItems;
-        Object obj = null;
+
         for (int count = 0; count < pageIndex; count++) {
-            obj = pageItems.get(pageSelections[count]);
-            pageItems = ReflectUtils.reflectList(obj);
+            Object item = pageItems.get(menuStack[count]);
+            pageItems = getItemCollection(item);
         }
 
         return pageItems;
     }
 
-    protected final boolean hasChildren(int index, int pageIndex, int[] pageSelections) {
-        Object obj = determineCollection(pageIndex, pageSelections).get(index);
-        return hasChildren(obj);
+    Fragment getPageInternal(int pageIndex, int[] menuStack) {
+        return getPage(pageIndex, determinePageCollection(pageIndex, menuStack));
     }
 
-    protected final boolean hasChildren(Object obj) {
-        return ReflectUtils.reflectList(obj).size() > 0;
-    }
-
-    protected abstract RecyclerView onCreateView(int pageIndex, MenuPager parent);
-
-    protected abstract MenuPager.Adapter onProvideAdapter(int pageIndex, RecyclerView view, ArrayList data);
-
-    protected void onForwardAnimation(int oldPageIndex, int newPageIndex, int[] animations) {
-        animations[0] = R.anim.menu_pager_current_in;
-        animations[1] = R.anim.menu_pager_current_out;
-    }
-
-    protected void onBackwardAnimation(int oldPageIndex, int newPageIndex, int[] animations) {
-        animations[0] = R.anim.menu_pager_back_in;
-        animations[1] = R.anim.menu_pager_back_out;
-    }
-
-    /*
-    PUBLIC FUNCTIONS
+    /**
+     * Returns the collection contained by the provided item. Override this method if you want to customize how the data is retrieved
+     * from the provided object
+     *
+     * @param item the item
+     * @return the collection
      */
+    public abstract ArrayList getItemCollection(Object item);
 
-    public Object getItem(int itemIndex, int pageIndex, int[] pageSelections) {
+    /**
+     * Returns the instance of {@link android.support.v4.app.Fragment} that represents this menu page
+     *
+     * @param pageIndex the index of the page
+     * @param data      the collection of data to build the page
+     * @return the page's Fragment
+     */
+    protected abstract Fragment getPage(int pageIndex, ArrayList data);
 
-        return determineCollection(pageIndex, pageSelections).get(itemIndex);
+    /**
+     * Callback invoked when the adapter is deleting a page {@link android.support.v4.app.Fragment} from the stack
+     *
+     * @param page the instance of page being deleted
+     */
+    protected abstract void onDeletePage(Fragment page);
 
-    }
+    /**
+     * Callback method invoked when the MenuPager is about to move forward and switch pages. Override this method to customize the in and out animation
+     * of the involved pages
+     *
+     * @param oldPageIndex the index of the old page
+     * @param newPageIndex the index of the new page being displayed
+     * @param animations   an array of 2 items. Fill this array at positions 0 and 1 with the resource id of your chosen animations
+     */
+    protected abstract void onForwardAnimation(int oldPageIndex, int newPageIndex, int[] animations);
+
+    /**
+     * Callback method invoked when the MenuPager is about to move backward and switch pages. Override this method to customize the in and out animation
+     * of the involved pages
+     *
+     * @param oldPageIndex the index of the old page
+     * @param newPageIndex the index of the new page being displayed
+     * @param animations   an array of 2 items. Fill this array at positions 0 and 1 with the resource id of your chosen animations
+     */
+    protected abstract void onBackwardAnimation(int oldPageIndex, int newPageIndex, int[] animations);
+
+    /**
+     * Method that returns a specific item contained in the menu collection. The item research is based on the provided item index, page index and menu stack
+     *
+     * @param itemIndex the index of the requested item inside the page
+     * @param pageIndex the index of the page that contains the item
+     * @param menuStack the menu stack to perform the research
+     * @return the item
+     */
+    public abstract Object getItem(int itemIndex, int pageIndex, int[] menuStack);
 
 }
 

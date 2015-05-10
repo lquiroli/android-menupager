@@ -2,37 +2,33 @@ package com.github.lquiroli.menupager.sample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.View;
-import android.widget.CheckBox;
 
 import com.github.lquiroli.menupager.widget.MenuPager;
-import com.github.lquiroli.menupager.widget.SimpleMenuAdapter;
+
+import java.util.ArrayList;
 
 /**
  * SimpleMenuActivity
  * Created by lorenzo.quiroli on 29/04/2015.
  */
-public class SimpleMenuActivity extends AppCompatActivity implements MenuPager.OnMenuItemClickListener {
+public class MenuActivity extends AppCompatActivity {
 
     private MenuPager mMenuPager;
-    private Shop menu;
-    private SimpleMenuAdapter menuAdapter;
+    private MyFragmentAdapter menuAdapter;
+    private ArrayList<MenuItem> mItems;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.simple_menu);
 
-        Log.d(SimpleMenuActivity.class.getSimpleName(), "" + getSupportFragmentManager());
-
         generateMenu();
 
         mMenuPager = (MenuPager) findViewById(R.id.menu_pager);
-        menuAdapter = new MyFragmentAdapter(getSupportFragmentManager(), menu.getEntries());
+        menuAdapter = new MyFragmentAdapter(getSupportFragmentManager(), mItems);
         mMenuPager.setAdapter(menuAdapter);
-        mMenuPager.setOnMenuItemClickListener(this);
 
     }
 
@@ -47,18 +43,18 @@ public class SimpleMenuActivity extends AppCompatActivity implements MenuPager.O
 
     private void generateMenu() {
 
-        menu = new Shop();
+        mItems = new ArrayList<MenuItem>();
 
         for (int count = 1; count < 5; count++) {
-            ShopEntry entry = new ShopEntry();
+            MenuItem entry = new MenuItem();
             entry.setLabel("Shop " + count);
 
             for (int c = 1; c < 8; c++) {
-                ShopEntry subEntry = new ShopEntry();
+                MenuItem subEntry = new MenuItem();
                 subEntry.setLabel("Shop " + count + "-" + c);
 
                 for (int cc = 1; cc < 6; cc++) {
-                    ShopEntry subSubEntry = new ShopEntry();
+                    MenuItem subSubEntry = new MenuItem();
                     subSubEntry.setLabel("Shop " + count + "-" + c + "-" + cc);
                     subEntry.getEntries().add(subSubEntry);
                 }
@@ -66,17 +62,9 @@ public class SimpleMenuActivity extends AppCompatActivity implements MenuPager.O
                 entry.getEntries().add(subEntry);
             }
 
-            menu.getEntries().add(entry);
+            mItems.add(entry);
         }
 
     }
 
-    @Override
-    public void onMenuItemClick(View itemView, Object item) {
-
-        ShopEntry entry = (ShopEntry) item;
-
-        CheckBox ch = ((CheckBox) itemView.findViewById(R.id.menu_check));
-        ch.setChecked(!ch.isChecked());
-    }
 }

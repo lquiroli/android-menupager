@@ -3,44 +3,38 @@ package com.github.lquiroli.menupager.widget;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.github.lquiroli.menupager.R;
-
-import java.util.List;
+import java.util.ArrayList;
 
 /**
- * MenuRecyclerAdapter
- * Created by lorenzo.quiroli on 30/04/2015.
+ * A simple implementation of a {@link com.github.lquiroli.menupager.widget.MenuPager.Adapter}. This adapter renders simple list items and fills them with
+ * the appropriate label
+ * <p/>
+ * <p>This class assumes that you decorated your collection with the correct annotations to work properly. Please see {@link com.github.lquiroli.menupager.annotation.Collection}
+ * and {@link com.github.lquiroli.menupager.annotation.Label} for further details</p>
+ * <p>Created by lorenzo.quiroli</p>
  */
 public final class SimpleMenuRecyclerAdapter extends MenuPager.Adapter<SimpleMenuRecyclerAdapter.ViewHolder> {
 
-    private List mData;
+    private ArrayList mData;
 
-    public SimpleMenuRecyclerAdapter(List data) {
-        super(data);
+    public SimpleMenuRecyclerAdapter(ArrayList data) {
         mData = data;
     }
 
+
     @Override
-    public ViewHolder onCreateViewHolder(final ViewGroup parent, int i) {
+    public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
 
-        LinearLayout tv = (LinearLayout) LayoutInflater.from(parent.getContext()).inflate(R.layout.simple_menu_item, parent, false);
-        ViewHolder vh = new ViewHolder(tv);
-
-        return vh;
+        return new ViewHolder(LayoutInflater.from(viewGroup.getContext()).inflate(android.R.layout.simple_list_item_1, viewGroup, false));
 
     }
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int i) {
 
-        Object obj = mData.get(i);
-
-        viewHolder.label.setText(ReflectUtils.reflectLabel(obj));
-        viewHolder.arrow.setVisibility(adapterInternal.hasChildren(obj) ? View.VISIBLE : View.GONE);
+        ((TextView) viewHolder.textView).setText(ReflectUtils.reflectLabel(mData.get(i)));
 
     }
 
@@ -51,13 +45,11 @@ public final class SimpleMenuRecyclerAdapter extends MenuPager.Adapter<SimpleMen
 
     public static class ViewHolder extends MenuPager.ViewHolder {
 
-        private TextView label;
-        private ImageView arrow;
+        private TextView textView;
 
-        public ViewHolder(LinearLayout itemView) {
+        public ViewHolder(View itemView) {
             super(itemView);
-            label = (TextView) itemView.findViewById(R.id.menu_item_label);
-            arrow = (ImageView) itemView.findViewById(R.id.menu_item_next);
+            textView = (TextView) itemView;
         }
     }
 

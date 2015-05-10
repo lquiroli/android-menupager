@@ -1,33 +1,31 @@
 package com.github.lquiroli.menupager.sample;
 
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 
-import com.github.lquiroli.menupager.widget.MenuPager;
-import com.github.lquiroli.menupager.widget.SimpleMenuAdapter;
+import com.github.lquiroli.menupager.widget.SimpleMenuFragmentAdapter;
 
 import java.util.ArrayList;
 
 /**
  * Created by lorenzo.quiroli on 05/05/2015.
  */
-public class MyFragmentAdapter extends SimpleMenuAdapter {
+public class MyFragmentAdapter extends SimpleMenuFragmentAdapter {
 
     public MyFragmentAdapter(FragmentManager fm, ArrayList items) {
         super(fm, items);
     }
 
     @Override
-    protected RecyclerView onCreateView(int pageIndex, MenuPager parent) {
-        RecyclerView recyclerView = super.onCreateView(pageIndex, parent);
-        if (pageIndex != 2)
-            recyclerView.setLayoutManager(new GridLayoutManager(parent.getContext(), 2));
-        return recyclerView;
+    protected Fragment getPage(int pageIndex, ArrayList data) {
+
+        MenuFragment fragment = new MenuFragment();
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(MenuFragment.BUNDLE_DATA, data);
+        fragment.setArguments(bundle);
+
+        return fragment;
     }
 
-    @Override
-    protected MenuPager.Adapter onProvideAdapter(int pageIndex, RecyclerView view, ArrayList data) {
-        return new ShopAdapter(data);
-    }
 }

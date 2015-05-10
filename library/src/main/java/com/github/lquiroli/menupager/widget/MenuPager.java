@@ -3,113 +3,295 @@ package com.github.lquiroli.menupager.widget;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.os.ParcelableCompat;
 import android.support.v4.os.ParcelableCompatCreatorCallbacks;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import java.util.List;
-
 /**
- * MenuPager
- * Created by lorenzo.quiroli on 29/04/2015.
+ * Layout manager that allows to organize and interact with a hierarchical collection of data. The collection will be displayed in pages, each page consisted
+ * by a {@link android.support.v4.app.Fragment}.
+ * The data and structure of every new page will depend on the choices the user made in the previous ones.
+ * <p/>
+ * <p>Created by lorenzo.quiroli</p>
  */
 public class MenuPager extends FrameLayout {
 
+
     private BaseMenuFragmentAdapter mAdapter;
     private OnMenuItemClickListener mOnMenuItemClickListener;
-    private boolean mIsFirstLayout = true;
-    private MenuFragment mCurrentFragment;
-    private int[] mPageSelections;
-    private int mCurrentPage;//TODO save to parcel
+    private OnMenuPageChangeListener mOnMenuPageChangeListener;
+    private OnMenuAdapterChangeListener mOnMenuAdapterChangeListener;
+    private boolean isFirstLayout = true;
+    /**
+     * The current stack of choices the user made
+     */
+    private int[] mMenuStack;
+    private int mCurrentPage;
+    private Fragment mCurrentFragment;
+    private boolean isAutoForward = true;
 
     public MenuPager(Context context, AttributeSet attrs) {
         super(context, attrs);
-        mCurrentPage = 0;
-        mPageSelections = new int[0];
+        initMenuPager();
     }
 
     public MenuPager(Context context) {
         this(context, null);
     }
 
-    public void setAdapter(BaseMenuFragmentAdapter adapter) {
-        //TODO manage adapter change
-        mAdapter = adapter;
+    void initMenuPager() {
+        mCurrentPage = 0;
+        mMenuStack = new int[0];
     }
 
+    /**
+     * Returns the index of the currently displayed page
+     *
+     * @return the page index
+     */
+    public int getCurrentPage() {
+        return mCurrentPage;
+    }
+
+    /**
+     * Returns the {@link android.support.v4.app.Fragment} of the currently displayed page
+     *
+     * @return the page Fragment
+     */
+    public Fragment getCurrentPageFragment() {
+        return mCurrentFragment;
+    }
+
+    /**
+     * Returns the current adapter
+     *
+     * @return the adapter
+     */
+    public BaseMenuFragmentAdapter getAdapter() {
+        return mAdapter;
+    }
+
+    /**
+     * Set the adapter that will provide data to this MenuPager
+     *
+     * @param adapter the adapter instance
+     */
+    public void setAdapter(BaseMenuFragmentAdapter adapter) {
+
+        BaseMenuFragmentAdapter oldAdapter = mAdapter;
+        mAdapter = adapter;
+
+        if (oldAdapter != null) {
+            setMenuStack(new int[0]);
+            if (mOnMenuAdapterChangeListener != null)
+                mOnMenuAdapterChangeListener.onAdapterChanged(oldAdapter);
+        }
+
+    }
+
+    /**
+     * @return true if the MenuPager is currently auto forward, false otherwise
+     */
+    public boolean isAutoForward() {
+        return isAutoForward;
+    }
+
+    /**
+     * Choose if the MenuPager should automatically forward to the next page when an item is selected. Default is true
+     *
+     * @param autoForward true to enable auto forward, false to disable
+     */
+    public void setAutoForward(boolean autoForward) {
+        isAutoForward = autoForward;
+    }
+
+    /**
+     * Sets an instance of {@link com.github.lquiroli.menupager.widget.MenuPager.OnMenuItemClickListener} that will receive callbacks when an item
+     * inside the page is clicked
+     *
+     * @param listener the listener
+     */
     public void setOnMenuItemClickListener(OnMenuItemClickListener listener) {
         mOnMenuItemClickListener = listener;
+    }
+
+    /**
+     * Sets an instance of {@link com.github.lquiroli.menupager.widget.MenuPager.OnMenuPageChangeListener} that will receive callbacks when the current
+     * page is changing
+     *
+     * @param listener the listener
+     */
+    public void setOnMenuPageChangeListener(OnMenuPageChangeListener listener) {
+        mOnMenuPageChangeListener = listener;
+    }
+
+    /**
+     * Sets an instance of {@link com.github.lquiroli.menupager.widget.MenuPager.OnMenuAdapterChangeListener} that will receive callback when the
+     * adapter for this MenuPager is changed
+     *
+     * @param listener the listener
+     */
+    public void setOnMenuAdapterChangeListener(OnMenuAdapterChangeListener listener) {
+        mOnMenuAdapterChangeListener = listener;
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
 
-        if (mIsFirstLayout) {
+        if (isFirstLayout) {
             if (mAdapter != null) {
-                setCurrentPage(mCurrentPage);
+                setMenuStack(mMenuStack);
             }
         }
 
-        mIsFirstLayout = false;
     }
 
-    public void setCurrentPage(int index) {
+    /**
+     * Returns the current menu stack of this MenuPager. The stack is an array of int representing the choices the user has made to this point. Each choice
+     * is the index of the item selected in the previous page.
+     * <p>(Ex : assuming that the previous page was the first one and contained a list of 3 items, if the user selected the second item the index 1 will be
+     * added to the menu stack at position 0. This means that the user selected the item indexed as 1 inside the page indexed as 0) </p>
+     *
+     * @return the current menu stack
+     */
+    public int[] getMenuStack() {
+        return mMenuStack;
+    }
 
-        if (mAdapter != null && ((index >= 0 && index != mCurrentPage) || mIsFirstLayout)) {
-            //Valid request, check direction
-            MenuFragment fragment = mAdapter.getFragmentItem(index, mPageSelections);
-            fragment.mMenuPager = this;
-            fragment.mPageIndex = index;
-            mCurrentFragment = fragment;
-            FragmentTransaction fTransaction = mAdapter.mFragmentManager.beginTransaction();
-            int[] animations = new int[2];
-            if (index < mCurrentPage) {
-                mAdapter.onBackwardAnimation(index, mCurrentPage, animations);
-            } else {
-                mAdapter.onForwardAnimation(mPageSelections.length - 1, mPageSelections.length, animations);
+    /**
+     * Set a new menu stack. This new stack will replace the old one and the user will be brought to the last indexed page inside the new stack
+     *
+     * @param newStack the new menu stack
+     */
+    public void setMenuStack(int[] newStack) {
+        setMenuStack(newStack, false);
+
+    }
+
+    /**
+     * Set a new menu stack. This new stack will replace the old one and the user will be brought to the last indexed page inside the new stack
+     *
+     * @param newStack     the new menu stack
+     * @param smoothScroll true to animate page change, false otherwise
+     */
+    public void setMenuStack(int[] newStack, boolean smoothScroll) {
+        mMenuStack = newStack;
+        mCurrentPage = mMenuStack.length;
+        isFirstLayout = true;
+        setCurrentPageInternal(mCurrentPage, smoothScroll);
+        isFirstLayout = false;
+    }
+
+    void setCurrentPageInternal(int index, boolean smoothScroll) {
+
+        if (mAdapter != null && ((index >= 0 && index != mCurrentPage) || isFirstLayout)) {
+            if (!isFirstLayout && mOnMenuPageChangeListener != null) {
+                mOnMenuPageChangeListener.onPageChange(mCurrentPage, index);
             }
-            fTransaction.setCustomAnimations(animations[0], animations[1]);
+            Fragment fragment = mAdapter.getPageInternal(index, mMenuStack);
+            FragmentTransaction fTransaction = mAdapter.mFragmentManager.beginTransaction();
+            if (smoothScroll) {
+                int[] animations = new int[2];
+                if (index < mCurrentPage) {
+                    mAdapter.onBackwardAnimation(mCurrentPage, index, animations);
+                } else {
+                    mAdapter.onForwardAnimation(mCurrentPage, index, animations);
+                }
+                fTransaction.setCustomAnimations(animations[0], animations[1]);
+            }
             fTransaction.replace(getId(), fragment);
             fTransaction.commit();
+
+            if (mCurrentFragment != null)
+                mAdapter.onDeletePage(mCurrentFragment);
+
             mCurrentPage = index;
+            mCurrentFragment = fragment;
+
+            if (!isFirstLayout && mOnMenuPageChangeListener != null) {
+                mOnMenuPageChangeListener.onPageChanged(mCurrentPage);
+            }
         }
 
     }
 
+    /**
+     * Moves the MenuPager one page back
+     *
+     * @return true if the MenuPager successfully moved back, false otherwise
+     */
     public boolean moveBackward() {
+        return moveBackward(true);
+    }
 
-        if (mPageSelections.length > 0) {
-            int[] newSelections = new int[mPageSelections.length - 1];
-            System.arraycopy(mPageSelections, 0, newSelections, 0, newSelections.length);
-            mPageSelections = newSelections;
-            setCurrentPage(mPageSelections.length);
-            return true;
+    /**
+     * Moves the MenuPager one page back
+     *
+     * @param smoothScroll true to animate page change, false otherwise
+     * @return true if the MenuPager successfully moved back, false otherwise
+     */
+    public boolean moveBackward(boolean smoothScroll) {
+        return moveBackward(mCurrentPage - 1, smoothScroll);
+    }
+
+    /**
+     * Moves the MenuPager back to provided page index (the first page always represented with index 0)
+     *
+     * @param pageIndex    the index of the page the MenuPager should move back to
+     * @param smoothScroll true to animate page change, false otherwise
+     * @return true if the MenuPager successfully moved back, false otherwise
+     */
+    public boolean moveBackward(int pageIndex, boolean smoothScroll) {
+
+        if (mMenuStack.length == 0 || pageIndex == mCurrentPage)
+            return false;
+
+        int index = mCurrentPage;
+        while (index > pageIndex) {
+            if (mMenuStack.length > 0) {
+                int[] newSelections = new int[mMenuStack.length - 1];
+                System.arraycopy(mMenuStack, 0, newSelections, 0, newSelections.length);
+                mMenuStack = newSelections;
+            }
+            index--;
         }
-        return false;
+        setCurrentPageInternal(pageIndex, smoothScroll);
+        return true;
 
     }
 
+    /**
+     * Moves the MenuPager forward of one page registering the index of the selected item inside the menu stack
+     *
+     * @param selection the index of the item selected inside the current page
+     */
     public void moveForward(int selection) {
+        moveForward(selection, true);
+    }
 
-        //Add new selection
-        int[] newSelections = new int[mPageSelections.length + 1];
-        System.arraycopy(mPageSelections, 0, newSelections, 0, mPageSelections.length);
+    /**
+     * Moves the MenuPager forward of one page registering the index of the selected item inside the menu stack
+     *
+     * @param selection    the index of the item selected inside the current page
+     * @param smoothScroll true to animate page change, false otherwise
+     */
+    public void moveForward(int selection, boolean smoothScroll) {
+        int[] newSelections = new int[mMenuStack.length + 1];
+        System.arraycopy(mMenuStack, 0, newSelections, 0, mMenuStack.length);
         newSelections[newSelections.length - 1] = selection;
-        mPageSelections = newSelections;
-        setCurrentPage(mPageSelections.length);
-
+        mMenuStack = newSelections;
+        setCurrentPageInternal(mMenuStack.length, smoothScroll);
     }
 
     @Override
     protected void onRestoreInstanceState(Parcelable state) {
-
-        Log.d(MenuPager.class.getSimpleName(), "onRestoreInstanceState. Isfirst : " + mIsFirstLayout);
 
         if (!(state instanceof SavedState)) {
             super.onRestoreInstanceState(state);
@@ -119,19 +301,18 @@ public class MenuPager extends FrameLayout {
         SavedState ss = (SavedState) state;
         super.onRestoreInstanceState(ss.getSuperState());
 
-        mPageSelections = ss.pageSelections;
+        mMenuStack = ss.pageSelections;
         mCurrentPage = ss.currentPage;
 
-        setCurrentPage(mCurrentPage);
+        setCurrentPageInternal(mCurrentPage, false);
 
     }
 
     @Override
     protected Parcelable onSaveInstanceState() {
-        Log.d(MenuPager.class.getSimpleName(), "onSaveInstance. Isfirst : " + mIsFirstLayout);
         Parcelable superState = super.onSaveInstanceState();
         SavedState ss = new SavedState(superState);
-        ss.pageSelections = mPageSelections;
+        ss.pageSelections = mMenuStack;
         ss.currentPage = mCurrentPage;
         return ss;
     }
@@ -139,12 +320,77 @@ public class MenuPager extends FrameLayout {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        mIsFirstLayout = true;
+        isFirstLayout = true;
+    }
+
+    @Override
+    public void addView(View child) {
+        checkHierarchy(child);
+        super.addView(child);
+    }
+
+    @Override
+    public void addView(View child, int index) {
+        checkHierarchy(child);
+        super.addView(child, index);
+    }
+
+    @Override
+    public void addView(View child, int index, ViewGroup.LayoutParams params) {
+        checkHierarchy(child);
+        super.addView(child, index, params);
+    }
+
+    @Override
+    public void addView(View child, ViewGroup.LayoutParams params) {
+        checkHierarchy(child);
+        super.addView(child, params);
+    }
+
+    @Override
+    public void addView(View child, int width, int height) {
+        checkHierarchy(child);
+        super.addView(child, width, height);
+    }
+
+    void checkHierarchy(View child) {
+
+        if (child != null) {
+            if (getChildCount() > 0) {
+                throw new IllegalStateException("MenuPager can only host one child");
+            } else if (!(child instanceof RecyclerView)) {
+                throw new IllegalStateException("MenuPager only child must be instance of " + RecyclerView.class.getName());
+            } else {
+                RecyclerView.Adapter adapter = ((RecyclerView) child).getAdapter();
+                if (adapter != null && !(adapter instanceof Adapter)) {
+                    throw new IllegalStateException("RecyclerView adapter must be instance of " + MenuPager.Adapter.class.getName());
+                }
+            }
+        }
 
     }
 
+    /**
+     * Interface definition for a callback to be invoked when an item inside a {@link com.github.lquiroli.menupager.widget.MenuPager} is clicked
+     */
     public interface OnMenuItemClickListener {
-        public void onMenuItemClick(View itemView, Object item);
+        public void onMenuItemClick(View itemView, Object item, int index);
+    }
+
+    /**
+     * Interface definition for a callback to be invoked when the current page of a {@link com.github.lquiroli.menupager.widget.MenuPager} is changing
+     */
+    public interface OnMenuPageChangeListener {
+        public void onPageChange(int oldPage, int newPage);
+
+        public void onPageChanged(int newPage);
+    }
+
+    /**
+     * Interface definition for a callback to be invoked when the adapter of a {@link com.github.lquiroli.menupager.widget.MenuPager} is changed
+     */
+    public interface OnMenuAdapterChangeListener {
+        public void onAdapterChanged(BaseMenuFragmentAdapter oldAdapter);
     }
 
     public static class SavedState extends BaseSavedState {
@@ -188,14 +434,10 @@ public class MenuPager extends FrameLayout {
 
     }
 
+
     public static abstract class Adapter<VH extends MenuPager.ViewHolder> extends RecyclerView.Adapter<VH> {
 
-        MenuPager menuPagerInternal;
-        BaseMenuFragmentAdapter adapterInternal;
         private RecyclerView mRecyclerView;
-
-        public Adapter(List data) {
-        }
 
         @Override
         public void onAttachedToRecyclerView(RecyclerView recyclerView) {
@@ -210,14 +452,19 @@ public class MenuPager extends FrameLayout {
                 @Override
                 public void onClick(View v) {
 
-                    int index = mRecyclerView.getChildAdapterPosition(v);
-                    Object obj = adapterInternal.getItem(index, menuPagerInternal.mCurrentPage, menuPagerInternal.mPageSelections);
-                    boolean hasChildren = adapterInternal.hasChildren(obj);
-                    if (hasChildren)
-                        menuPagerInternal.moveForward(index);
+                    MenuPager menuPager = (MenuPager) mRecyclerView.getParent();
 
-                    if (menuPagerInternal.mOnMenuItemClickListener != null) {
-                        menuPagerInternal.mOnMenuItemClickListener.onMenuItemClick(v, obj);
+                    final int index = mRecyclerView.getChildAdapterPosition(v);
+                    Object obj = menuPager.mAdapter.getItem(index, menuPager.mCurrentPage, menuPager.mMenuStack);
+
+                    if (menuPager.isAutoForward) {
+                        boolean hasChildren = ReflectUtils.reflectList(obj).size() > 0;
+                        if (hasChildren)
+                            menuPager.moveForward(index);
+                    }
+
+                    if (menuPager.mOnMenuItemClickListener != null) {
+                        menuPager.mOnMenuItemClickListener.onMenuItemClick(v, obj, index);
                     }
                 }
             });

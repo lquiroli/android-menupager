@@ -1,25 +1,26 @@
 package com.github.lquiroli.menupager.sample;
 
-import com.github.lquiroli.menupager.annotation.Children;
+import com.github.lquiroli.menupager.annotation.Collection;
 import com.github.lquiroli.menupager.annotation.Label;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Created by lorenzo.quiroli on 05/05/2015.
  */
-public class ShopEntry {
+public class MenuItem implements Serializable {
 
-    @Children
-    private ArrayList<ShopEntry> entries = new ArrayList<ShopEntry>();
+    @Collection
+    private ArrayList<MenuItem> entries = new ArrayList<MenuItem>();
     @Label
     private String label;
 
-    public ArrayList<ShopEntry> getEntries() {
+    public ArrayList<MenuItem> getEntries() {
         return entries;
     }
 
-    public void setEntries(ArrayList<ShopEntry> entries) {
+    public void setEntries(ArrayList<MenuItem> entries) {
         this.entries = entries;
     }
 
