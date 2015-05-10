@@ -25,7 +25,7 @@ public abstract class SimpleMenuFragmentAdapter extends BaseMenuFragmentAdapter 
     }
 
     public ArrayList getItemCollection(Object item) {
-        return ReflectUtils.reflectList(item);
+        return ReflectUtils.reflectCollection(item);
     }
 
     public ArrayList determinePageCollection(int pageIndex, int[] menuStack) {

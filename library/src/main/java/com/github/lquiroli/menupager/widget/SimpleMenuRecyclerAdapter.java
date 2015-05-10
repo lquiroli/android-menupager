@@ -3,6 +3,8 @@ package com.github.lquiroli.menupager.widget;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.github.lquiroli.menupager.R;
@@ -29,7 +31,7 @@ public final class SimpleMenuRecyclerAdapter extends MenuPager.Adapter<SimpleMen
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
 
-        View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.simple_menu_item, viewGroup, false);
+        LinearLayout v = (LinearLayout) LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.simple_menu_item, viewGroup, false);
         return new ViewHolder(v);
 
     }
@@ -37,7 +39,11 @@ public final class SimpleMenuRecyclerAdapter extends MenuPager.Adapter<SimpleMen
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int i) {
 
-        ((TextView) viewHolder.textView).setText(ReflectUtils.reflectLabel(mData.get(i)));
+        Object item = mData.get(i);
+        viewHolder.menuItemLabel.setText(ReflectUtils.reflectLabel(item));
+        if (ReflectUtils.reflectCollection(item).size() == 0) {
+            viewHolder.menuItemForward.setVisibility(View.GONE);
+        }
 
     }
 
@@ -48,11 +54,13 @@ public final class SimpleMenuRecyclerAdapter extends MenuPager.Adapter<SimpleMen
 
     public static class ViewHolder extends MenuPager.ViewHolder {
 
-        private TextView textView;
+        private TextView menuItemLabel;
+        private ImageView menuItemForward;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            textView = (TextView) itemView;
+            menuItemLabel = (TextView) itemView.findViewById(R.id.menu_item_label);
+            menuItemForward = (ImageView) itemView.findViewById(R.id.menu_item_forward);
         }
     }
 

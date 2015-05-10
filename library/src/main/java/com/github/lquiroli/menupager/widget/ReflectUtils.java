@@ -12,7 +12,7 @@ import java.util.ArrayList;
  */
 class ReflectUtils {
 
-    public static ArrayList reflectList(Object obj) {
+    public static ArrayList reflectCollection(Object obj) {
 
         ArrayList list = new ArrayList();
 

@@ -489,7 +489,7 @@ public class MenuPager extends FrameLayout {
                     Object obj = menuPager.mAdapter.getItem(index, menuPager.mCurrentPage, menuPager.mMenuStack);
 
                     if (menuPager.isAutoForward) {
-                        boolean hasChildren = ReflectUtils.reflectList(obj).size() > 0;
+                        boolean hasChildren = ReflectUtils.reflectCollection(obj).size() > 0;
                         if (hasChildren)
                             menuPager.moveForward(index);
                     }

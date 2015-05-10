@@ -54,15 +54,15 @@ public class MenuActivity extends AppCompatActivity implements MenuPager.OnMenuI
 
         for (int count = 1; count < 5; count++) {
             MenuItem entry = new MenuItem();
-            entry.setLabel("Shop " + count);
+            entry.setLabel("Item " + count);
 
             for (int c = 1; c < 8; c++) {
                 MenuItem subEntry = new MenuItem();
-                subEntry.setLabel("Shop " + count + "-" + c);
+                subEntry.setLabel("Item " + count + "-" + c);
 
                 for (int cc = 1; cc < 6; cc++) {
                     MenuItem subSubEntry = new MenuItem();
-                    subSubEntry.setLabel("Shop " + count + "-" + c + "-" + cc);
+                    subSubEntry.setLabel("Item " + count + "-" + c + "-" + cc);
                     subEntry.getEntries().add(subSubEntry);
                 }
 
