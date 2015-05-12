@@ -1,6 +1,10 @@
 Android MenuPager
 =================
 
+Android widget that allows to paginate a hierarchical menu in a simple and customizable way
+
+![Alt text](sample/screens/screen1.png) ![Alt text](sample/screens/screen2.png)
+
 ### Download
 
 Clone the repository and import as Android Library in eclipse or grab via maven or gradle:
