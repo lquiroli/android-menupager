@@ -13,15 +13,15 @@ Clone the repository and import as Android Library in eclipse or grab via maven 
 
 ```xml
 <dependency>
-    <groupId>To be defined</groupId>
-    <artifactId>To be defined</artifactId>
+    <groupId>com.github.lquiroli</groupId>
+    <artifactId>menupager</artifactId>
     <version>(insert latest version)</version>
 </dependency>
 ```
 ##### Gradle
 ```groovy
 dependencies {
-   compile 'To be defined'
+   compile 'com.github.lquiroli:menupager:+'
 }
 ```
 ### Usage
